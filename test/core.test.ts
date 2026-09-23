@@ -31,7 +31,8 @@ test("OAuth 1.0a 簽章符合 X 官方文件範例", async () => {
 test("讀 WordPress RSS", () => {
   const xml = `<?xml version="1.0"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 <item><title>《測試》發售日公開 &amp; 預購開始</title><link>https://example.com/?p=1</link>
-<pubDate>Tue, 23 Sep 2026 03:00:00 +0000</pubDate><guid isPermaLink="false">https://example.com/?p=1</guid>
+<pubDate>Tue, 23 Sep 2026 03:00:00 +0000</pubDate>
+<category><![CDATA[遊戲新聞]]></category><category><![CDATA[遊戲攻略]]></category><guid isPermaLink="false">https://example.com/?p=1</guid>
 <description><![CDATA[<p>摘要</p>]]></description>
 <content:encoded><![CDATA[<p>第一段&#8230;</p><figure><img src="x"><figcaption>圖說</figcaption></figure><p>第二段</p>]]></content:encoded></item>
 </channel></rss>`;
@@ -40,6 +41,7 @@ test("讀 WordPress RSS", () => {
   assert.equal(it.url, "https://example.com/?p=1");
   assert.equal(it.summary, "第一段…\n第二段");
   assert.equal(it.published, "2026-09-23T03:00:00.000Z");
+  assert.deepEqual(it.categories, ["遊戲新聞", "遊戲攻略"]);
 });
 
 test("文案清理：拿掉引號、網址，破折號改逗號", () => {

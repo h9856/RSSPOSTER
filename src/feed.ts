@@ -4,6 +4,8 @@ export interface FeedItem {
   title: string;
   summary: string;
   published: string | null;
+  /** RSS 的分類與標籤名稱（WordPress 兩者都輸出成 category） */
+  categories: string[];
 }
 
 const ENTITIES: Record<string, string> = {
@@ -76,6 +78,11 @@ export function parseFeed(xml: string): FeedItem[] {
       title,
       summary: stripHtml(body).slice(0, 4000),
       published: toIso(tag(b, isAtom ? "published" : "pubDate") ?? tag(b, "updated")),
+      categories: isAtom
+        ? [...b.matchAll(/<category\b[^>]*\bterm="([^"]*)"/gi)].map((m) => decodeEntities(m[1]))
+        : [...b.matchAll(/<category(?:\s[^>]*)?>([\s\S]*?)<\/category>/gi)].map((m) =>
+            decodeEntities(unwrapCdata(m[1]).trim()),
+          ),
     });
   }
   return items;

@@ -35,7 +35,8 @@ export async function ingest(env: Env, site: Site, log: string[]): Promise<void>
     log.push(`[${site.id}] feed 讀取失敗 ${res.status}`);
     return;
   }
-  const items = parseFeed(await res.text());
+  const exclude = new Set(site.excludeCategories ?? []);
+  const items = parseFeed(await res.text()).filter((it) => !it.categories.some((c) => exclude.has(c)));
   const known = await env.DB.prepare("SELECT COUNT(*) AS n FROM items WHERE site = ?").bind(site.id).first<{ n: number }>();
   const firstRun = (known?.n ?? 0) === 0;
   const now = new Date().toISOString();

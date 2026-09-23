@@ -30,6 +30,8 @@ export interface Site {
   maxAgeHours: number;
   /** true：文案寫好先停在 review，要到後台核准才會發 */
   review: boolean;
+  /** 帶有這些分類或標籤名稱的文章不發 */
+  excludeCategories?: string[];
   /** 站台時區，預設 UTC+8 */
   utcOffset?: number;
   x: XCredentials;

@@ -9,6 +9,7 @@
     "hours": [7, 24],
     "maxAgeHours": 12,
     "review": false,
+    "excludeCategories": ["攻略"],
     "x": {
       "apiKey": "",
       "apiSecret": "",
