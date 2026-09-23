@@ -1,0 +1,21 @@
+{
+  "name": "rssposter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "db:init": "wrangler d1 execute rssposter --remote --file=schema.sql",
+    "db:init:local": "wrangler d1 execute rssposter --local --file=schema.sql"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260923.1",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.136.3"
+  }
+}

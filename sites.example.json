@@ -1,0 +1,36 @@
+[
+  {
+    "id": "news",
+    "name": "範例新聞站",
+    "feed": "https://news.example.com/?feed=xqueue",
+    "voice": "遊戲新聞站。讀者是台灣玩家。貼文用一句事實陳述開頭，主詞放最前面，接一句補充讀者最在意的細節（日期、平台、價格、免費與否）。",
+    "dailyMax": 12,
+    "minGapMinutes": 45,
+    "hours": [7, 24],
+    "maxAgeHours": 12,
+    "review": false,
+    "x": {
+      "apiKey": "",
+      "apiSecret": "",
+      "accessToken": "",
+      "accessSecret": ""
+    }
+  },
+  {
+    "id": "toys",
+    "name": "範例玩具站",
+    "feed": "https://toys.example.com/feed/",
+    "voice": "玩具與轉蛋商品速報。貼文先寫品牌與商品名，再寫發售時間與價格。商品型號照原文保留。",
+    "dailyMax": 8,
+    "minGapMinutes": 60,
+    "hours": [9, 23],
+    "maxAgeHours": 24,
+    "review": true,
+    "x": {
+      "apiKey": "",
+      "apiSecret": "",
+      "accessToken": "",
+      "accessSecret": ""
+    }
+  }
+]

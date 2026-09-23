@@ -1,0 +1,23 @@
+name = "rssposter"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 每 10 分鐘跑一輪：讀 feed、寫文案、發到期的貼文
+[triggers]
+crons = ["*/10 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rssposter"
+database_id = "REPLACE_WITH_D1_ID"
+
+[vars]
+# "1" 只寫文案、不真的發文。確認文案沒問題再改成 "0"。
+DRY_RUN = "1"
+CLAUDE_MODEL = "claude-opus-5"
+
+# 以下用 wrangler secret put 設定，不寫在這裡：
+#   ANTHROPIC_API_KEY
+#   ADMIN_PASSWORD   後台的密碼（帳號隨意）
+#   SITES            站台設定 JSON，格式見 sites.example.json
