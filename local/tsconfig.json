@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["node"], "lib": ["ES2022", "DOM"] },
+  "include": [".", "../src/compose.ts", "../src/feed.ts", "../src/x.ts", "../src/config.ts"]
+}

@@ -57,6 +57,36 @@ function toIso(date: string | null): string | null {
   return Number.isNaN(t) ? null : new Date(t).toISOString();
 }
 
+export interface ArticlePage {
+  image: string | null;
+  text: string;
+}
+
+/**
+ * 從文章頁取 og:image 與內文。很多站的 feed 只給摘要，寫文案要看全文。
+ * 內文取 entry-content（WordPress 常見寫法）或 <article> 範圍內的段落與小標。
+ */
+export function parseArticle(html: string): ArticlePage {
+  const og =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+
+  let start = html.search(/class=["'][^"']*\bentry-content\b/i);
+  if (start < 0) start = html.search(/<article\b/i);
+  if (start < 0) start = 0;
+  let end = html.indexOf("</article>", start);
+  if (end < 0) end = html.length;
+
+  const parts: string[] = [];
+  for (const m of html.slice(start, end).matchAll(/<(p|h2|h3|li)\b[^>]*>([\s\S]*?)<\/\1>/gi)) {
+    const t = stripHtml(m[2]);
+    // 內文結束後的來源、相關文章、作者介紹不要
+    if (/^(Sources?|資料來源|來源|猜你想看|推薦文章|延伸閱讀|相關文章|author)\s*[:：]?$/i.test(t)) break;
+    if (t.length > 1) parts.push(t);
+  }
+  return { image: og ? decodeEntities(og[1]) : null, text: parts.join("\n").slice(0, 6000) };
+}
+
 /** 讀 RSS 2.0 或 Atom。只取發文需要的欄位，內文優先取全文。 */
 export function parseFeed(xml: string): FeedItem[] {
   const items: FeedItem[] = [];

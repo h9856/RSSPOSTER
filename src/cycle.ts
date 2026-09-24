@@ -1,6 +1,6 @@
 import type { Env, Site } from "./config.ts";
 import { isDryRun, siteDayStartUtc, siteNow } from "./config.ts";
-import { parseFeed } from "./feed.ts";
+import { parseArticle, parseFeed } from "./feed.ts";
 import { composePost } from "./compose.ts";
 import { postToX, XError } from "./x.ts";
 
@@ -74,6 +74,17 @@ export async function compose(env: Env, site: Site, log: string[]): Promise<void
 
   for (const item of results) {
     try {
+      // feed 只給摘要的站，改讀文章頁全文
+      if (item.summary.length < 400) {
+        const page = await fetch(item.url, { headers: { "User-Agent": "RSSPoster/1.0" } });
+        if (page.ok) {
+          const { text } = parseArticle(await page.text());
+          if (text.length > item.summary.length) {
+            item.summary = text;
+            await env.DB.prepare("UPDATE items SET summary = ? WHERE id = ?").bind(text, item.id).run();
+          }
+        }
+      }
       const text = await composePost(env, site, item);
       await env.DB.prepare("UPDATE items SET text = ?, status = ?, error = NULL WHERE id = ?")
         .bind(text, site.review ? "review" : "ready", item.id)

@@ -35,6 +35,17 @@ export interface Site {
   /** 站台時區，預設 UTC+8 */
   utcOffset?: number;
   x: XCredentials;
+  /** 本機圖卡工具的版型設定 */
+  card?: CardStyle;
+}
+
+export interface CardStyle {
+  /** 圖卡上的品牌字，例如站名英文 */
+  brand: string;
+  /** 分類小字的顏色 */
+  accent: string;
+  /** 右上角標誌的檔案路徑（PNG／SVG），沒有就用品牌字 */
+  logo?: string;
 }
 
 export function loadSites(env: Env): Site[] {

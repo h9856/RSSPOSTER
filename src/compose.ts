@@ -2,18 +2,22 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Env, Site } from "./config.ts";
 import { X_MAX_WEIGHT, xPostWeight } from "./x.ts";
 
-// 共用寫作規則放最前面且固定不變，讓提示快取吃得到
-const RULES = `你替網路媒體寫 X（Twitter）貼文。讀者是台灣人，一律用繁體中文與台灣用語。
-
-規則：
-- 只輸出貼文內文本身。不要加引號、不要加說明、不要附網址（系統會自動接在最後）。
-- 全文不超過 90 個中文字。兩句以內最好。
+/** 所有站、所有平台共用的寫作規則（本機圖卡工具也用這份） */
+export const WRITING_RULES = `- 讀者是台灣人，一律用繁體中文與台灣用語。
 - 開頭就是事實陳述，主詞放最前面。不要用問句、懸念、「你知道嗎」「竟然」「震驚」這類鉤子。
 - 只寫文章裡有的資訊，不要推測、不要補文章沒寫的數字或日期。
 - 不要用破折號「——」，改用逗號或句號。
 - 不要自稱本站、小編，不要寫「點擊連結」「詳見內文」這類導引句。
 - 不加 emoji。hashtag 最多一個，只有站台說明要求時才加。
 - 遊戲、商品、作品名稱用文章裡的寫法，作品名用《》。`;
+
+// 固定不變的放最前面，讓提示快取吃得到
+const RULES = `你替網路媒體寫 X（Twitter）貼文。
+
+規則：
+- 只輸出貼文內文本身。不要加引號、不要加說明、不要附網址（系統會自動接在最後）。
+- 全文不超過 90 個中文字。兩句以內最好。
+${WRITING_RULES}`;
 
 const client = (env: Env) => new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 

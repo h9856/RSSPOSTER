@@ -75,6 +75,39 @@ npm run db:init:local
 npm run dev       # 需要 .dev.vars，內容同上面三個 secret
 ```
 
+## 本機圖卡工具
+
+`local/` 是另一條獨立的流程：每篇新文章產出一張 1080×1350 直式圖卡加一則貼文，存在本機，不上傳也不發文。
+
+```bash
+npm run cards -- news                # 處理 feed 裡還沒做過的文章，預設最新 5 篇
+npm run cards -- news --limit 10
+npm run cards -- --render out/news/2026-09-24/1047-some-article
+```
+
+每篇一個資料夾，`out/<站台>/<站台日期>/<時分>-<網址代稱>/`：
+
+| 檔案 | 內容 |
+|---|---|
+| `card.jpg` | 圖卡 |
+| `post.txt` | 貼文內文，最後一行是文章網址 |
+| `meta.json` | 文案與版型設定，改完用 `--render` 重畫 |
+| `source.img` | 原始首圖，重畫時用 |
+
+`out/<站台>/seen.json` 記錄做過的文章，重跑不會重複產出。需要環境變數 `ANTHROPIC_API_KEY`。
+
+**圖片**取文章頁的 og:image。放大超過 1.6 倍才能填滿的小圖、或比例寬於 2.2:1 的橫幅，自動改用 `framed` 版型（模糊底圖上放完整原圖），其餘用 `cover` 裁切填滿，裁切位置由 sharp 的注意力偵測決定。
+
+**文字**由 Claude 一次產出貼文、圖卡大標（2 到 3 行，每行 9 字以內）、分類小字與底部作品名。feed 只有摘要的站會改讀文章頁全文。
+
+**手動修正**：編輯 `meta.json` 後跑 `--render`。
+- `copy.lines`：大標，一個元素一行
+- `copy.label`、`copy.footer`：分類小字、底部作品名
+- `focus`：`auto`／`left`／`center`／`right`／`top`，裁切位置
+- `layout`：`cover`／`framed`
+
+**版型設定**在站台的 `card` 欄位：`brand` 品牌字、`accent` 分類小字顏色、`logo` 右上角標誌檔（可省略，省略就用品牌字）。字型是思源黑體（Noto Sans TC），每張只從 Google Fonts 抓用到的字，快取在 `.cache/fonts/`。
+
 ## 文案規則
 
 寫在 `src/compose.ts` 的 `RULES`，所有站共用：繁中台灣用語、主詞在前的事實陳述、不用問句與懸念、不用破折號、不補文章沒有的資訊、不自稱本站。
