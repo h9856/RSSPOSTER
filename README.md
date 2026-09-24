@@ -94,7 +94,9 @@ npm run cards -- --render out/news/2026-09-24/1047-some-article
 | `meta.json` | 文案與版型設定，改完用 `--render` 重畫 |
 | `source.img` | 原始首圖，重畫時用 |
 
-`out/<站台>/seen.json` 記錄做過的文章，重跑不會重複產出。需要環境變數 `ANTHROPIC_API_KEY`。
+`out/<站台>/seen.json` 記錄做過的文章，重跑不會重複產出。
+
+**有沒有 AI 都能跑。** 有 `ANTHROPIC_API_KEY` 就由 Claude 寫文字；沒有（或加 `--no-ai`）就用文章標題排一版草稿：大標照詞界斷成最多 3 行（放不下的截掉），分類取 feed 的第一個分類，底部取標題裡的《》，`meta.json` 標 `"draft": true`。手填流程就是改 `meta.json` 再 `--render`。
 
 **圖片**取文章頁的 og:image。放大超過 1.6 倍才能填滿的小圖、或比例寬於 2.2:1 的橫幅，自動改用 `framed` 版型（模糊底圖上放完整原圖），其餘用 `cover` 裁切填滿，裁切位置由 sharp 的注意力偵測決定。
 

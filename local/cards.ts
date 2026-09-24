@@ -10,7 +10,7 @@ import path from "node:path";
 import type { Site } from "../src/config.ts";
 import { parseFeed, parseArticle, type FeedItem } from "../src/feed.ts";
 import { renderCard, pickLayout, type Focus, type Layout } from "./card.ts";
-import { writeCopy, checkCopy, type Copy } from "./copy.ts";
+import { writeCopy, draftCopy, checkCopy, type Copy } from "./copy.ts";
 
 const OUT = path.resolve("out");
 
@@ -25,6 +25,8 @@ interface Meta {
   focus: Focus;
   /** cover 裁切填滿，framed 模糊底圖放原圖 */
   layout: Layout;
+  /** true：文字是自動草稿還沒人工改過。手改完可以刪掉或改成 false */
+  draft?: boolean;
   createdAt: string;
 }
 
@@ -78,7 +80,8 @@ async function draw(dir: string, meta: Meta): Promise<void> {
 async function processSite(siteId: string, limit: number): Promise<void> {
   const site = (await loadSites()).find((s) => s.id === siteId);
   if (!site) throw new Error(`sites.json 裡沒有 ${siteId}`);
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error("沒有設定 ANTHROPIC_API_KEY");
+  const useAi = Boolean(process.env.ANTHROPIC_API_KEY) && !process.argv.includes("--no-ai");
+  if (!useAi) console.log("不使用 AI：大標先用文章標題排草稿，請改 meta.json 後用 --render 重畫");
 
   const seenFile = path.join(OUT, site.id, "seen.json");
   const seen = new Set(await readJson<string[]>(seenFile, []));
@@ -102,7 +105,7 @@ async function processSite(siteId: string, limit: number): Promise<void> {
       const image = Buffer.from(await (await fetch(imageUrl)).arrayBuffer());
       // feed 只有摘要時改用文章頁的全文
       const summary = page.text.length > item.summary.length ? page.text : item.summary;
-      const copy = await writeCopy(site, { title: item.title, summary });
+      const copy = useAi ? await writeCopy(site, { title: item.title, summary }) : draftCopy(item);
 
       const { day, hm } = siteStamp(site, item.published);
       const dir = path.join(OUT, site.id, day, `${hm}-${slugOf(item)}`);
@@ -117,6 +120,7 @@ async function processSite(siteId: string, limit: number): Promise<void> {
         copy,
         focus: "auto",
         layout: await pickLayout(image),
+        draft: !useAi,
         createdAt: new Date().toISOString(),
       };
       await draw(dir, meta);

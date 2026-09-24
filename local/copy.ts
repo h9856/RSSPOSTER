@@ -38,6 +38,51 @@ export function checkCopy(c: Copy): string | null {
   return null;
 }
 
+/**
+ * 不呼叫 AI 的草稿：大標用文章標題照詞界斷行（最多 3 行，放不下的截掉），
+ * 分類取 feed 的第一個分類，底部取標題裡第一個《》。給手填流程當起點。
+ */
+export function draftCopy(item: { title: string; categories: string[] }): Copy {
+  const segments = [...new Intl.Segmenter("zh-Hant", { granularity: "word" }).segment(item.title)].map(
+    (s) => s.segment,
+  );
+  // 《》【】內的名稱不拆開，數字和後面的單位（9月、22日、100萬）黏在一起
+  const PAIRS: Record<string, string> = { "《": "》", "【": "】" };
+  const words: string[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    const close = PAIRS[segments[i]];
+    if (close) {
+      const end = segments.indexOf(close, i);
+      if (end > i) {
+        words.push(segments.slice(i, end + 1).join(""));
+        i = end;
+        continue;
+      }
+    }
+    const prev = words[words.length - 1];
+    if (prev && /[0-9０-９]$/.test(prev) && /^[年月日週周萬億折%％倍位名款]/.test(segments[i])) {
+      words[words.length - 1] = prev + segments[i];
+      continue;
+    }
+    words.push(segments[i]);
+  }
+
+  const lines: string[] = [""];
+  for (const w of words) {
+    const cur = lines[lines.length - 1];
+    if (units(cur + w) <= 9 || cur.trim() === "") lines[lines.length - 1] = cur + w;
+    else if (lines.length < 3) lines.push(w.trimStart());
+    else break;
+  }
+
+  return {
+    post: item.title,
+    lines: lines.map((l) => l.trim()).filter(Boolean),
+    label: item.categories[0] ?? "",
+    footer: item.title.match(/《([^》]+)》/)?.[1] ?? "",
+  };
+}
+
 export async function writeCopy(site: Site, item: { title: string; summary: string }): Promise<Copy> {
   const client = new Anthropic();
   const article = `標題：${item.title}\n\n內文：\n${item.summary.slice(0, 3500)}`;
