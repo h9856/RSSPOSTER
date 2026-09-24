@@ -2,6 +2,10 @@
 //
 //   node --experimental-strip-types local/cards.ts <站台id> [--limit 5]
 //       讀 feed，處理還沒做過的文章（最新的 limit 篇）
+//   node --experimental-strip-types local/cards.ts <站台id> --list
+//       只列出還沒做過的文章，挑稿用
+//   node --experimental-strip-types local/cards.ts <站台id> --url <網址> [--url <網址> ...]
+//       只做指定的幾篇
 //   node --experimental-strip-types local/cards.ts --render <資料夾>
 //       照資料夾裡的 meta.json 重畫圖卡（改完標題、裁切位置之後用）
 
@@ -77,11 +81,18 @@ async function draw(dir: string, meta: Meta): Promise<void> {
   await writeFile(path.join(dir, "meta.json"), JSON.stringify(meta, null, 2));
 }
 
-async function processSite(siteId: string, limit: number): Promise<void> {
+interface RunOptions {
+  limit: number;
+  /** 只列出候選，不產圖 */
+  list: boolean;
+  /** 只處理這些網址（不受 limit 限制） */
+  urls: string[];
+}
+
+async function processSite(siteId: string, opts: RunOptions): Promise<void> {
   const site = (await loadSites()).find((s) => s.id === siteId);
   if (!site) throw new Error(`sites.json 裡沒有 ${siteId}`);
   const useAi = Boolean(process.env.ANTHROPIC_API_KEY) && !process.argv.includes("--no-ai");
-  if (!useAi) console.log("不使用 AI：大標先用文章標題排草稿，請改 meta.json 後用 --render 重畫");
 
   const seenFile = path.join(OUT, site.id, "seen.json");
   const seen = new Set(await readJson<string[]>(seenFile, []));
@@ -89,11 +100,31 @@ async function processSite(siteId: string, limit: number): Promise<void> {
 
   const res = await fetch(site.feed, { headers: { "User-Agent": "RSSPoster/1.0" } });
   if (!res.ok) throw new Error(`feed 讀取失敗 ${res.status}`);
-  const items = parseFeed(await res.text())
+  const candidates = parseFeed(await res.text())
     .filter((it) => !it.categories.some((c) => exclude.has(c)))
-    .filter((it) => !seen.has(it.guid))
-    .slice(0, limit)
-    .reverse(); // 舊的先做
+    .filter((it) => !seen.has(it.guid));
+
+  if (opts.list) {
+    for (const it of candidates) {
+      const { day, hm } = siteStamp(site, it.published);
+      console.log(`${day} ${hm}　[${it.categories.join("/")}]　${it.title}\n　　${it.url}`);
+    }
+    console.log(`共 ${candidates.length} 篇未處理`);
+    return;
+  }
+
+  const norm = (u: string) => decodeURI(u).replace(/\/$/, "");
+  const items = (
+    opts.urls.length
+      ? opts.urls.map((u) => {
+          const it = candidates.find((c) => norm(c.url) === norm(u));
+          if (!it) throw new Error(`feed 的未處理文章裡找不到 ${u}`);
+          return it;
+        })
+      : candidates.slice(0, opts.limit)
+  ).reverse(); // 舊的先做
+
+  if (!useAi) console.log("不使用 AI：大標先用文章標題排草稿，請改 meta.json 後用 --render 重畫");
 
   if (items.length === 0) console.log(`[${site.id}] 沒有新文章`);
   for (const item of items) {
@@ -142,7 +173,13 @@ if (args[0] === "--render") {
   console.log(`已重畫 ${path.relative(process.cwd(), dir)}`);
 } else if (args[0]) {
   const i = args.indexOf("--limit");
-  await processSite(args[0], i >= 0 ? Number(args[i + 1]) : 5);
+  await processSite(args[0], {
+    limit: i >= 0 ? Number(args[i + 1]) : 5,
+    list: args.includes("--list"),
+    urls: args.flatMap((a, j) => (a === "--url" && args[j + 1] ? [args[j + 1]] : [])),
+  });
 } else {
-  console.log("用法：cards.ts <站台id> [--limit 5]　或　cards.ts --render <資料夾>");
+  console.log(
+    "用法：cards.ts <站台id> [--limit 5] [--list] [--url <網址> ...] [--no-ai]　或　cards.ts --render <資料夾>",
+  );
 }

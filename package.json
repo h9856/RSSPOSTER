@@ -9,7 +9,8 @@
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "db:init": "wrangler d1 execute rssposter --remote --file=schema.sql",
     "db:init:local": "wrangler d1 execute rssposter --local --file=schema.sql",
-    "cards": "node --experimental-strip-types local/cards.ts"
+    "cards": "node --experimental-strip-types local/cards.ts",
+    "cards:batch": "node --experimental-strip-types local/batch.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
