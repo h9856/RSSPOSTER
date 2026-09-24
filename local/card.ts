@@ -64,7 +64,7 @@ async function prepareImage(image: Buffer, layout: Layout, focus: Focus): Promis
     const front = await sharp(image)
       .resize({
         width: Math.min(CARD_W - 80, Math.round(width * MAX_UPSCALE)),
-        height: IMG_H - 180,
+        height: IMG_H - 300,
         fit: "inside",
       })
       .toBuffer();
@@ -74,8 +74,8 @@ async function prepareImage(image: Buffer, layout: Layout, focus: Focus): Promis
         {
           input: front,
           left: Math.round((CARD_W - meta.width!) / 2),
-          // 稍微偏上，讓下方漸層不要吃掉原圖
-          top: Math.round((IMG_H - meta.height!) / 2 - 40),
+          // 上面讓出右上角標誌的位置（到 y=190），下面別被漸層吃掉太多
+          top: Math.max(190, Math.round((IMG_H - meta.height!) / 2 - 40)),
         },
       ])
       .jpeg({ quality: 92 })
